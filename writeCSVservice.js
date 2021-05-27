@@ -2,7 +2,7 @@ const fs = require('fs');
 const dir = 'employees'
 const files = fs.readdirSync(dir)
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-
+const tasks = []
 
 
 const csvWriter = createCsvWriter({
@@ -20,46 +20,53 @@ const csvWriter = createCsvWriter({
 getDoc()
 
 function getDoc() {
-
     for (const file of files) {
-        let data = getJSONFileData('./employees/' + file)
-        const res = getReport(data, file)
+        let task = (function (file) {
+            return getJSONFileData('./employees/' + file)
+        })(file)
 
-        writeToFile(res)
-
+        tasks.push(task)
     }
 
+    while (tasks.length > 0) {
+        writeToFile(tasks[0])
+        tasks.shift()
+    }
 
 }
 
 async function writeToFile(res) {
+
     await csvWriter.writeRecords(res)
     console.log('The CSV file was written successfully');
 }
 
 
 function getJSONFileData(filename) {
-    const y = fs.readFileSync(filename, 'utf-8').split('\n')
-    y.shift()
-    y.pop()
+    const fileData = fs.readFileSync(filename, 'utf-8').split('\n')
+    fileData.shift()
+    fileData.pop()
     let arr = []
-    y.forEach(str => {
+
+    let employeeName = filename.slice(12, -4)
+
+    fileData.forEach(str => {
         let access = str.slice(20, -2)
         if (access === 'Access granted') {
             let date = str.slice(0, 10)
             let time = str.slice(11, 19)
-            let name = filename.slice(12, -4)
-            arr.push({ name, date, time, access })
+
+            arr.push({ name: employeeName, date, time, access })
         }
 
     })
 
-    return arr
+    return getReport(arr, employeeName)
 }
 
 
 
-function getReport(data, file) {
+function getReport(data, employeeName) {
     const newarr = {}
     data.forEach(el => {
         if (newarr[el.date]) newarr[el.date].push(el.time)
@@ -72,7 +79,7 @@ function getReport(data, file) {
 
     let dates = Object.keys(newarr)
     let table = []
-    const name = file.slice(0, -4)
+
 
     dates.forEach(date => {
         let entrance = newarr[date][0]
@@ -83,7 +90,7 @@ function getReport(data, file) {
         let MM = Math.floor(Math.floor((diffSec - (HH * 3600)) / 60));
         MM = MM >= 10 ? MM : '0' + MM
         let time = `${HH}:${MM}`
-        table.push({ name: name, date, entrance, exit, total: time })
+        table.push({ name: employeeName, date, entrance, exit, total: time })
 
     });
 
