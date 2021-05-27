@@ -28,9 +28,11 @@ function getDoc() {
         tasks.push(task)
     }
 
+
     while (tasks.length > 0) {
-        writeToFile(tasks[0])
-        tasks.shift()
+        let taskToWrite = tasks.shift()
+        writeToFile(taskToWrite)
+
     }
 
 }
