@@ -59,7 +59,6 @@ function getJSONFileData(filename) {
 
 
 
-
 function getReport(data, file) {
     const newarr = {}
     data.forEach(el => {
